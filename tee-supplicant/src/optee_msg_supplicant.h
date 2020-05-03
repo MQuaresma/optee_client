@@ -37,7 +37,7 @@
 /*
  * Load TA certificate into memory
  */
-#define OPTEE_MSG_RPC_CMD_LOAD_TA_CRT 12
+#define OPTEE_MSG_RPC_CMD_LOAD_TA_CERT 12
 
 /*
  * Replay Protected Memory Block access
