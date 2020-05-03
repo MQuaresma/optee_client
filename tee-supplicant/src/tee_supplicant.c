@@ -297,6 +297,38 @@ static uint32_t load_ta(size_t num_params, struct tee_ioctl_param *params)
 	return TEEC_SUCCESS;
 }
 
+
+static uint32_t load_ta_cert(size_t num_params, struct tee_ioctl_param *params)
+{
+    int ta_found = 0;
+    size_t size = 0;
+    struct param_value *val_cmd = NULL;
+    TEEC_UUID uuid;
+    TEEC_SharedMemory shm_ta;
+
+    memset(&uuid, 0, sizeof(uuid));
+    memset(&shm_ta, 0, sizeof(shm_ta));
+
+    if(num_params != 2 || get_value(num_params, params, 0, val_cmd) ||
+            get_param(num_params, params, 1, &shm_ta))
+        return TEEC_ERROR_BAD_PARAMETERS;
+
+    uuid_from_octets(&uuid, (void *)val_cmd);
+
+    //TODO: implement certificate loading function
+    if(!(sizeof(uuid) > shm_ta.size || !shm_ta.buffer))
+        size = sizeof(uuid);
+    else
+        memcpy(shm_ta.buffer, val_cmd, sizeof(uuid));
+
+    MEMREF_SIZE(params + 1) = size;
+
+    if(shm_ta.buffer && size > shm_ta.size)
+        return TEEC_ERROR_SHORT_BUFFER;
+
+    return TEEC_SUCCESS;
+}
+
 static struct tee_shm *alloc_shm(int fd, size_t size)
 {
 	struct tee_shm *shm = NULL;
@@ -636,6 +668,9 @@ static bool process_one_request(struct thread_arg *arg)
 	case OPTEE_MSG_RPC_CMD_FTRACE:
 		ret = prof_process(num_params, params, "ftrace-");
 		break;
+    case OPTEE_MSG_RPC_CMD_LOAD_TA_CERT:
+        ret = load_ta_cert(num_params, params);
+        break;
 	default:
 		EMSG("Cmd [0x%" PRIx32 "] not supported", func);
 		/* Not supported. */
