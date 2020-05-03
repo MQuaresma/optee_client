@@ -315,7 +315,7 @@ static uint32_t load_ta_cert(size_t num_params, struct tee_ioctl_param *params)
     uuid_from_octets(&uuid, (void *)val_cmd);
 
     //TODO: implement certificate loading function
-    if(!(sizeof(uuid) > shm_ta.size || !shm_ta.buffer))
+    if(sizeof(uuid) > shm_ta.size || !shm_ta.buffer)
         size = sizeof(uuid);
     else
         memcpy(shm_ta.buffer, val_cmd, sizeof(uuid));
