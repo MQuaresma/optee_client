@@ -45,6 +45,7 @@
  * @return              0 if TA was found, otherwise -1.
  */
 int TEECI_LoadSecureModule(const char *name,
-			   const TEEC_UUID *destination, void *ta,
-			   size_t *ta_size);
+                           const TEEC_UUID *destination, void *ta,
+                           size_t *ta_size,
+                           uint8_t cert);
 #endif

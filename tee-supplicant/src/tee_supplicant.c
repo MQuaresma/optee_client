@@ -279,7 +279,7 @@ static uint32_t load_ta(size_t num_params, struct tee_ioctl_param *params)
 	uuid_from_octets(&uuid, (void *)val_cmd);
 
 	size = shm_ta.size;
-	ta_found = TEECI_LoadSecureModule(ta_dir, &uuid, shm_ta.buffer, &size);
+	ta_found = TEECI_LoadSecureModule(ta_dir, &uuid, shm_ta.buffer, &size, 0);
 	if (ta_found != TA_BINARY_FOUND) {
 		EMSG("  TA not found");
 		return TEEC_ERROR_ITEM_NOT_FOUND;
@@ -300,6 +300,7 @@ static uint32_t load_ta(size_t num_params, struct tee_ioctl_param *params)
 
 static uint32_t load_ta_cert(size_t num_params, struct tee_ioctl_param *params)
 {
+    int cert_found = 0;
     size_t size = 0;
     struct param_value *val_cmd = NULL;
     TEEC_UUID uuid;
@@ -309,16 +310,17 @@ static uint32_t load_ta_cert(size_t num_params, struct tee_ioctl_param *params)
     memset(&shm_ta, 0, sizeof(shm_ta));
 
     if(num_params != 2 || get_value(num_params, params, 0, &val_cmd) ||
-            get_param(num_params, params, 1, &shm_ta))
-        return TEEC_ERROR_BAD_PARAMETERS;
+	    get_param(num_params, params, 1, &shm_ta))
+		return TEEC_ERROR_BAD_PARAMETERS;
 
     uuid_from_octets(&uuid, (void *)val_cmd);
 
-    //TODO: implement certificate loading function
-    if(sizeof(uuid) > shm_ta.size || !shm_ta.buffer)
-        size = sizeof(uuid);
-    else
-        memcpy(shm_ta.buffer, val_cmd, sizeof(uuid));
+    size = shm_ta.size;
+    cert_found = TEECI_LoadSecureModule(ta_dir, &uuid, shm_ta.buffer, &size, 1);
+    if(cert_found != TA_BINARY_FOUND) {
+        EMSG("  TA certificate not found");
+        return TEEC_ERROR_ITEM_NOT_FOUND;
+    }
 
     MEMREF_SIZE(params + 1) = size;
 

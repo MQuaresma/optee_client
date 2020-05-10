@@ -64,7 +64,7 @@ struct tee_rpc_cmd {
 };
 
 /*
- * Based on the uuid this function will try to find a TA-binary on the
+ * Based on the uuid this function will try to find a TA-binary/certificate on the
  * filesystem and return it back to the caller in the parameter ta.
  *
  * @param: destination  The uuid of the TA we are searching for.
@@ -72,14 +72,17 @@ struct tee_rpc_cmd {
  *                      the TA from the filesystem to the pointer itself. It is
  *                      the callers responsibility to free the pointer.
  * @param: ta_size      The size of the TA found on file system. It will be 0
- *                      if no TA was not found.
+ *                      if no TA was not found
+ * @param: cert         Flag indicating whether the module is a certificate or
+ *                      not
  *
  * @return              0 if TA was found, otherwise -1.
  */
 static int try_load_secure_module(const char* prefix,
-				  const char* dev_path,
-				  const TEEC_UUID *destination, void *ta,
-				  size_t *ta_size)
+                                  const char* dev_path,
+                                  const TEEC_UUID *destination, void *ta,
+                                  size_t *ta_size,
+                                  uint8_t cert)
 {
 	char fname[PATH_MAX] = { 0 };
 	FILE *file = NULL;
@@ -100,20 +103,21 @@ static int try_load_secure_module(const char* prefix,
 	 */
 again:
 	n = snprintf(fname, PATH_MAX,
-		     "%s/%s/%08x-%04x-%04x-%02x%02x%s%02x%02x%02x%02x%02x%02x.ta",
-		     prefix, dev_path,
-		     destination->timeLow,
-		     destination->timeMid,
-		     destination->timeHiAndVersion,
-		     destination->clockSeqAndNode[0],
-		     destination->clockSeqAndNode[1],
-		     first_try ? "-" : "",
-		     destination->clockSeqAndNode[2],
-		     destination->clockSeqAndNode[3],
-		     destination->clockSeqAndNode[4],
-		     destination->clockSeqAndNode[5],
-		     destination->clockSeqAndNode[6],
-		     destination->clockSeqAndNode[7]);
+                 "%s/%s/%08x-%04x-%04x-%02x%02x%s%02x%02x%02x%02x%02x%02x.%s",
+                 prefix, dev_path,
+                 destination->timeLow,
+                 destination->timeMid,
+                 destination->timeHiAndVersion,
+                 destination->clockSeqAndNode[0],
+                 destination->clockSeqAndNode[1],
+                 first_try ? "-" : "",
+                 destination->clockSeqAndNode[2],
+                 destination->clockSeqAndNode[3],
+                 destination->clockSeqAndNode[4],
+                 destination->clockSeqAndNode[5],
+                 destination->clockSeqAndNode[6],
+                 destination->clockSeqAndNode[7],
+                 cert ? "cert" : "ta");
 
 	DMSG("Attempt to load %s", fname);
 
@@ -165,18 +169,19 @@ out:
 }
 
 int TEECI_LoadSecureModule(const char* dev_path,
-			   const TEEC_UUID *destination, void *ta,
-			   size_t *ta_size)
+                           const TEEC_UUID *destination, void *ta,
+                           size_t *ta_size,
+                           uint8_t cert)
 {
 #ifdef TEEC_TEST_LOAD_PATH
 	int res = 0;
 
 	res = try_load_secure_module(TEEC_TEST_LOAD_PATH,
-				     dev_path, destination, ta, ta_size);
+                                 dev_path, destination, ta, ta_size, cert);
 	if (res != TA_BINARY_NOT_FOUND)
 		return res;
 #endif
 
 	return try_load_secure_module(TEEC_LOAD_PATH,
-				      dev_path, destination, ta, ta_size);
+                                  dev_path, destination, ta, ta_size, cert);
 }
