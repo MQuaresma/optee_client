@@ -32,8 +32,8 @@
 #define TA_BINARY_NOT_FOUND -1
 
 /**
- * Based on the uuid this function will try to find a TA-binary on the
- * filesystem and return it back to the caller in the parameter ta.
+ * Based on the uuid this function will try to find a TA-binary or TA-certificate
+ * on the filesystem and return it back to the caller in the parameter ta.
  *
  * @param: destination  The uuid of the TA we are searching for.
  * @param: ta           A pointer which this function will copy
@@ -41,7 +41,8 @@
  *                      enough.
  * @param: ta_size      The size of the TA found on file system. It will be 0
  *                      if no TA was not found.
- *
+ * @param: cert         Falg indicating whether to load the TA binary or
+ *                      the certificate
  * @return              0 if TA was found, otherwise -1.
  */
 int TEECI_LoadSecureModule(const char *name,
